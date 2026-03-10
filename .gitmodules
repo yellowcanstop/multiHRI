@@ -1,0 +1,6 @@
+[submodule "libs/ta-rware"]
+	path = libs/ta-rware
+	url = https://github.com/uoe-agents/task-assignment-robotic-warehouse
+[submodule "libs/overcooked_ai"]
+	path = libs/overcooked_ai
+	url = https://github.com/HIRO-group/overcooked_ai

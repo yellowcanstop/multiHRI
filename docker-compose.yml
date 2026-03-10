@@ -1,0 +1,19 @@
+services:
+  app:
+    build: .
+    working_dir: /app
+    volumes:
+      - .:/app  
+    ports:
+      - "8501:8501"
+    environment:
+      - PYTHONUNBUFFERED=1
+    stdin_open: true 
+    tty: true
+    deploy:
+          resources:
+            reservations:
+              devices:
+                - driver: nvidia
+                  count: all
+                  capabilities: [gpu]

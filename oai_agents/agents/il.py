@@ -135,7 +135,14 @@ class BehavioralCloningTrainer(OAITrainer):
         """
         name = name or 'bc'
         super(BehavioralCloningTrainer, self).__init__(name, args)
-        self.device = th.device('cuda' if th.cuda.is_available() else 'cpu')
+        #self.device = th.device('cuda' if th.cuda.is_available() else 'cpu')
+        if th.cuda.is_available():
+            self.device = th.device('cuda')
+        elif th.backends.mps.is_available():
+            self.device = th.device('mps')
+        else:
+            self.device = th.device('cpu')
+        print(f"Using device: {self.device}")
         self.num_players = 2
         self.dataset = dataset
         self.datasets = None

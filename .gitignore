@@ -155,3 +155,5 @@ eval_cache/
 wandb/
 
 eval_cache.zip
+
+.DS_Store

@@ -1,36 +1,24 @@
-# Zero-Shot Coordination between Teams of Agents: N-XPlay
-This is the repository for **Towards Zero-Shot Coordination between Teams of Agents: The N-XPlay Framework** paper presented at RSS Workshop on Scalable and Resilient Multi-Robot Systems: Decision-Making, Coordination, and Learning 2025. 
+### Prerequisites
+Download Docker Desktop.
+- Windows users: Ensure the "WSL 2 Backend" is enabled.
+- Mac users: Ensure "VirtioFS" is enabled in Settings > General
 
-Paper link: https://arxiv.org/abs/2506.17560. Please email the authors at first.lastname@colorado.edu if you have any questions!
+VS Code Extensions: Install the "Dev Containers" extension.
 
-## Set up guide
-1. Follow setup instrcution for overcooked_ai from [here](https://github.com/HIRO-group/overcooked_ai)
-2. Clone this repository: `git clone git@github.com:HIRO-group/multiHRI.git`
-3. Activate conda env: `conda activate mHRI`
-4. Run: `pip install pip==24.0 wheel==0.38.4 setuptools==65.5.0`
-4. cd into the repo and run: `pip install -e .`.
-5. Install liblsl using conda 
-
-## Training agents
-Refer to scripts/train_agents.py for examples on how to train different agent trainings.
-If you've installed the package as above, you can run the script using:  
-`python scripts/train_agents.py`
-
-python -m scripts.train_agents --algo-name SP --pop-total-training-timesteps 100 --layout-names c1_v1 --n-envs 1 --num-players 2 --teammates-len 1 --epoch-timesteps 100
-
-disable wanb in oai_agents/agents/rl.py line 336 and 411
-comment out all wanb usages in oai_agents/agents/base_agent.py
-
-## Citation
-If you use this repository in any way, please cite:
+### Setup
 ```
-{@inproceedings{abderezaei2025zeroshotcoordinationteamsagents,
-    author      = {Abderezaei, Ava and Lin, Chi-Hui and Miceli, Joseph and Sivagnanadasan, Naren and Aroca-Ouellette, Stéphane and Brawer, Jake and Roncone, Alessandro},
-    title       = {Towards Zero-Shot Coordination between Teams of Agents: The N-XPlay Framework},
-    booktitle   = {RSS Workshop on Scalable and Resilient Multi-Robot Systems: Decision-Making, Coordination, and Learning},
-    year        = {2025},
-    organization= {RSS},
-    month       = {June},
-    numpages    = {3},
-}
+git clone --recursive https://github.com/yellowcanstop/multiHRI.git
+cd multiHRI
 ```
+Note: If you already cloned the repo without --recursive, run git submodule update --init --recursive to fetch the missing tarware and overcooked submodules.
+
+Open in VS Code. 
+Notification: "Folder contains a Dev Container configuration. Reopen in Container."
+Click Reopen in Container.
+
+## Train
+`python -m scripts.train_agents --algo-name SP --pop-total-training-timesteps 100 --n-envs 1 --epoch-timesteps 100`
+
+## TODO
+1. train agent for tarware. check eval code.
+2. tarware env.render() -> save as videofile

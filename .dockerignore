@@ -1,0 +1,26 @@
+# Git metadata (we handle these via submodules)
+**/.git
+**/.gitignore
+
+# Python artifacts
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/*.pyd
+
+# Training outputs (prevents local logs from entering the image)
+agent_models/
+agent_models_*/
+wandb/
+eval_cache/
+eval_cache.zip
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# Environments
+.env
+.venv
+env/
+venv/
