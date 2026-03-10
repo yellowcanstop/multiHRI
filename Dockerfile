@@ -3,7 +3,6 @@ FROM continuumio/miniconda3:latest
 RUN apt-get update && apt-get install -y \
     git \
     build-essential \
-    liblsl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
