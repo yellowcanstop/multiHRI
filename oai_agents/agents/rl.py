@@ -64,7 +64,13 @@ class RLAgentTrainer(OAITrainer):
         self.use_policy_clone = use_policy_clone
 
         self.learner_type = learner_type
-        self.env, self.eval_envs = self.get_envs(env, eval_envs, deterministic, learner_type, start_timestep)
+        
+        from scripts.rware_utils import get_rware_env
+        self.env = get_rware_env(args)
+        self.eval_envs = None # TODO
+        
+        #self.env, self.eval_envs = self.get_envs(env, eval_envs, deterministic, learner_type, start_timestep)
+        
         # Episode to start training from (usually 0 unless restarted)
         self.start_step = start_step
         self.steps = self.start_step

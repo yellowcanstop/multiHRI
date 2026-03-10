@@ -287,6 +287,17 @@ def SPN_XSPCKP(args) -> None:
 if __name__ == '__main__':
     args = get_arguments()
 
+    # Overriding layout_names for rware if not provided via CLI
+    if not args.layout_names:
+        args.layout_names = ["tarware-tiny-2agvs-9pickers-globalobs-v1"]
+    
+    # Ensure num_players matches the rware env-id selected
+    # This is crucial for the population managers!
+    if '2agvs' in args.layout_names[0]:
+        args.num_players = 2
+    elif '3agvs' in args.layout_names[0]:
+        args.num_players = 3
+
     if args.algo_name == 'SP':
         SP(args=args)
 
@@ -308,6 +319,6 @@ if __name__ == '__main__':
     elif args.algo_name == 'SPN_1ADV_XSPCKP':
         SPN_1ADV_XSPCKP(args=args)
 
-    elif args.algo_name == 'MEP':
-        MEP(args=args)
+    #elif args.algo_name == 'MEP':
+    #    MEP(args=args)
 
