@@ -80,6 +80,7 @@ class RwareToOAIWrapper(gym.Env):
                 tm_count += 1
         
         # 4. Step the actual Multi-Agent environment
+        # TARWARE's main difference compared to a generic gymnasium environment: the reward and the terminated and truncated flags are lists, and each element corresponds to the respective agent.
         obs_list, reward_list, term_list, trunc_list, info = self.env.step(all_actions)
 
         self.last_obs_list = obs_list
