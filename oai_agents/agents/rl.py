@@ -7,6 +7,7 @@ from oai_agents.agents.agent_utils import CustomAgent
 from oai_agents.gym_environments.base_overcooked_env import OvercookedGymEnv
 from oai_agents.common.checked_model_name_handler import CheckedModelNameHandler
 
+import copy
 import numpy as np
 from stable_baselines3 import PPO, DQN
 from stable_baselines3.common.env_util import make_vec_env
@@ -39,7 +40,7 @@ class RLAgentTrainer(OAITrainer):
 
         self.args = args
         self.device = args.device
-        self.teammates_len = self.args.teammates_len
+        #self.teammates_len = self.args.teammates_len
         self.num_players = self.args.num_players
         self.curriculum = curriculum
 
@@ -67,10 +68,17 @@ class RLAgentTrainer(OAITrainer):
         
         from scripts.rware_utils import get_rware_env
         self.env = get_rware_env(args)
-        self.eval_envs = None # TODO
+        self.eval_envs = []
+        for layout in self.args.layout_names:
+            args_copy = copy.deepcopy(args) # Avoid side effects
+            # We temporarily set the layout_name in args so get_rware_env picks up the correct one for each iteration
+            args_copy.layout_name = layout
+            self.eval_envs.append(get_rware_env(args_copy))
         
         #self.env, self.eval_envs = self.get_envs(env, eval_envs, deterministic, learner_type, start_timestep)
         
+        self.teammates_len = self.env.get_attr("num_players")[0] - 1 # only 1 environment
+
         # Episode to start training from (usually 0 unless restarted)
         self.start_step = start_step
         self.steps = self.start_step
@@ -244,7 +252,7 @@ class RLAgentTrainer(OAITrainer):
             https://stackoverflow.com/a/76198343/9102696
             n_epochs = Number of epoch when optimizing the surrogate loss
             '''
-            sb3_agent = PPO("MultiInputPolicy", self.env, policy_kwargs=policy_kwargs, seed=self.seed, verbose=self.args.sb_verbose, n_steps=500,
+            sb3_agent = PPO("MlpPolicy", self.env, policy_kwargs=policy_kwargs, seed=self.seed, verbose=self.args.sb_verbose, n_steps=500,
                             n_epochs=4, learning_rate=0.0003, batch_size=500, ent_coef=0.01, vf_coef=0.3,
                             gamma=0.99, gae_lambda=0.95, device=self.args.device)
             agent_name = f'{self.name}'

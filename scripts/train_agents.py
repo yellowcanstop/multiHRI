@@ -289,6 +289,7 @@ if __name__ == '__main__':
 
     # Overriding layout_names for rware if not provided via CLI
     if not args.layout_names:
+        # tarware-tiny-2agvs-9pickers-globalobs-v1 has total 11 agents (1 learner + 10 teammates)
         args.layout_names = ["tarware-tiny-2agvs-9pickers-globalobs-v1"]
     
     # Ensure num_players matches the rware env-id selected

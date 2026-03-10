@@ -1,3 +1,5 @@
+from wandb import env
+
 from oai_agents.agents.agent_utils import load_agent, CustomAgent
 from oai_agents.common.arguments import get_args_to_save, set_args_from_load
 from oai_agents.common.state_encodings import ENCODING_SCHEMES
@@ -5,7 +7,7 @@ from oai_agents.common.subtasks import get_doable_subtasks, Subtasks
 from oai_agents.common.tags import AgentPerformance, KeyCheckpoints
 from oai_agents.common.checked_model_name_handler import CheckedModelNameHandler
 # from oai_agents.gym_environments.base_overcooked_env import USEABLE_COUNTERS
-
+from scripts.rware_utils import get_rware_env
 from overcooked_ai_py.mdp.overcooked_mdp import Action
 from overcooked_ai_py.planning.planners import MediumLevelActionManager
 
@@ -192,17 +194,34 @@ class SB3Wrapper(OAIAgent):
     def predict(self, obs, state=None, episode_start=None, deterministic=False):
         # Based on https://github.com/DLR-RM/stable-baselines3/blob/master/stable_baselines3/common/policies.py#L305
         # Updated to include action masking
-        obs = {k: v for k, v in obs.items() if k in self.policy.observation_space.keys()}
+
+        # rware typically returns a flat vector or a local grid as a NumPy array
+        if isinstance(obs, dict):
+            obs = {k: v for k, v in obs.items() if k in self.policy.observation_space.keys()}
+        
         self.policy.set_training_mode(False)
         obs, vectorized_env = self.policy.obs_to_tensor(obs)
         with th.no_grad():
             # When OAIAgent uses stable_baseline_3's PPO, its self.policy will have get_distribution method
             if hasattr(self.policy, "get_distribution"):
+                '''
+                No custom action mask for rware for now.
+                TODO in future:
+                - prevent collisions: mask 'move forward' if teammate is in cell in front
+                - mask 'load' if agent already carrying shelf, mask 'unload' if not
+                - ensure agent does not try to execute a subtask that is impossible given current map state
+                '''
+
+                '''
                 if 'subtask_mask' in obs and np.prod(obs['subtask_mask'].shape) == np.prod(self.policy.action_space.n):
                     dist = self.policy.get_distribution(obs, action_masks=obs['subtask_mask'])
                 else:
                     dist = self.policy.get_distribution(obs)
+                '''
+                dist = self.policy.get_distribution(obs)
+
                 actions = dist.get_actions(deterministic=deterministic)
+            
             # When OAIAgent uses stable_baseline_3's DQN, its self.policy will not have get_distribution method.
             # Instead, it has q_net, which tells the values when taking different actions.
             # torch.distributions.Categorical can transform it to policy distribution.
@@ -391,7 +410,11 @@ class OAITrainer(ABC):
                 self.splits.append(split)
         self.env_setup_idx, self.weighted_ratio = 0, 0.9
         self.env = None
-        # TODO: Claim eval_envs
+        self.eval_envs = []
+        for layout in self.args.layout_names:
+            self.args.layout_name = layout 
+            venv = get_rware_env(self.args)
+            self.eval_envs.append(venv)
 
     def _get_constructor_parameters(self):
         return dict(name=self.name, args=self.args)
@@ -412,6 +435,10 @@ class OAITrainer(ABC):
 
     def evaluate(self, eval_agent, num_eps_per_layout_per_tm=5, visualize=False, timestep=None, log_wandb=True,
                  deterministic=False):
+        
+        if not self.eval_envs: # Handles None or empty list
+            print("Error: No evaluation environments found!")
+            return 0, {}, {}
 
         timestep = timestep if timestep is not None else eval_agent.num_timesteps
         tot_mean_reward = []
@@ -422,17 +449,25 @@ class OAITrainer(ABC):
         # This is outside of the for loop, meaning that each time we evaluate the same player positions across all layouts for a fair comparison
         selected_p_indexes = random.sample(range(self.args.num_players), min(3, self.args.num_players))
 
-        for _, env in enumerate(self.eval_envs):
+        for _, venv in enumerate(self.eval_envs):
+            layout_name = venv.get_attr("layout_name")[0]
+            # we have DummyVecEnv wrapping RwareToOAIWrapper. Since only 1 environment in DummyVecEnv (RWARE), jsut access it directly.
+            env = venv.envs[0]
+
             rew_per_layout_per_teamtype[env.layout_name] = {
                 teamtype: [] for teamtype in self.eval_teammates_collection[env.layout_name]
             }
             rew_per_layout[env.layout_name] = 0
 
-            teamtypes_population = self.eval_teammates_collection[env.layout_name]
+            teamtypes_population = self.eval_teammates_collection.get(layout_name, {})
+            if not teamtypes_population:
+                print(f"Warning: No teammates found for {layout_name}")
+                continue
 
             for teamtype in teamtypes_population:
                 teammates = teamtypes_population[teamtype][np.random.randint(len(teamtypes_population[teamtype]))]
-                env.set_teammates(teammates)
+                #env.set_teammates(teammates)
+                venv.env_method("set_teammates", teammates)
 
                 for p_idx in selected_p_indexes:
                     env.set_reset_p_idx(p_idx)
@@ -457,7 +492,7 @@ class OAITrainer(ABC):
         if log_wandb:
             print("wandb log removed")
             #wandb.log({'eval_mean_reward': np.mean(tot_mean_reward), 'timestep': timestep})
-        return np.mean(tot_mean_reward), rew_per_layout, rew_per_layout_per_teamtype
+        return (np.mean(tot_mean_reward) if tot_mean_reward else 0), rew_per_layout, rew_per_layout_per_teamtype
 
     def set_new_teammates(self, curriculum):
         for i in range(self.args.n_envs):
@@ -467,7 +502,7 @@ class OAITrainer(ABC):
             teammates = curriculum.select_teammates_for_layout(population_teamtypes=population_teamtypes,
                                                                layout=layout_name)
 
-            assert len(teammates) == self.args.teammates_len
+            #assert len(teammates) == self.args.teammates_len
             assert type(teammates) == list
 
             for teammate in teammates:
