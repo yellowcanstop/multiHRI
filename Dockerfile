@@ -17,8 +17,5 @@ RUN pip install pip==24.0 wheel==0.38.4 setuptools==65.5.0
 COPY libs/ta-rware /app/libs/ta-rware
 RUN pip install -e /app/libs/ta-rware
 
-COPY libs/overcooked_ai /app/libs/overcooked_ai
-RUN pip install -e /app/libs/overcooked_ai
-
 COPY . /app
 RUN pip install -e .
