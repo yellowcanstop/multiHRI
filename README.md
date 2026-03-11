@@ -12,9 +12,16 @@ cd multiHRI
 ```
 Note: If you already cloned the repo without --recursive, run git submodule update --init --recursive to fetch the missing tarware and overcooked submodules.
 
-Open in VS Code. 
+1. Open in VS Code. 
 Notification: "Folder contains a Dev Container configuration. Reopen in Container."
 Click Reopen in Container.
+
+2. Open Terminal inside Container (Ctrl + `)
+```
+conda activate mHRI
+pip install -e ./libs/overcooked_ai
+pip install stable-baselines3==2.7.1
+```
 
 ## Train
 `python -m scripts.train_agents --algo-name SP --pop-total-training-timesteps 100 --n-envs 1 --epoch-timesteps 100`
